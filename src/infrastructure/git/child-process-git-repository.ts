@@ -8,15 +8,8 @@ import { GitRepositoryModel } from "../../domain/models/git/git-repository.model
 const execFileAsync = promisify(execFile);
 
 export class ChildProcessGitRepository implements GitRepositoryModel {
-  public constructor(private readonly cwd: string) {}
 
-  public async getCurrentBranch(): Promise<string> {
-    const { stdout } = await this.git(["rev-parse", "--abbrev-ref", "HEAD"]);
-    return stdout.trim();
-  }
-
-  public async getCommitMetadata(commitRef: string): Promise<CommitMetadataModel> {
-    const format = [
+  private readonly format: string = [
       "%H",
       "%h",
       "%an",
@@ -26,10 +19,19 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
       "%b"
     ].join("%x1f");
 
+  public constructor(private readonly cwd: string) {}
+
+  public async getCurrentBranch(): Promise<string> {
+    const { stdout } = await this.git(["rev-parse", "--abbrev-ref", "HEAD"]);
+    return stdout.trim();
+  }
+
+  public async getCommitMetadata(commitRef: string): Promise<CommitMetadataModel> {
+
     const { stdout } = await this.git([
       "show",
       "--quiet",
-      `--format=${format}`,
+      `--format=${this.format}`,
       commitRef
     ]);
 
@@ -86,7 +88,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
       cwd: this.cwd,
       encoding: "utf8",
       maxBuffer: 1024 * 1024 * 32,
-      timeout: 30_000
+      timeout: 30_000 // make these constants
     });
   }
 }

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { CommitMetadataModel } from "../../domain/models/commit-metadata.model";
 import { PatchFileModel } from "../../domain/models/patch-file.model";
-import { GitPatchParser } from "./git-patch-parser";
+import { GitPatchParser } from "./git-patch.parser";
 import { GitRepositoryModel } from "../../domain/models/git/git-repository.model";
 
 const execFileAsync = promisify(execFile);
@@ -80,7 +80,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
 
     const branchName = await this.getCurrentBranch();
 
-    // TODO: remove the empty strings. This is gross.
+    // TODO: remove the nullish coalescing to empty strings. This is gross.
     return {
       hash: hash?.trim() ?? "",
       shortHash: shortHash?.trim() ?? "",
@@ -101,6 +101,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
    * @returns An array of objects representing the changed files.
   */
   public async getChangedFiles(commitRef: string): Promise<readonly PatchFileModel[]> {
+    // TODO: Make the arguments to the Git commands constants. Maybe move them to a separate file. Maybe make them configurable.
     const nameStatus = await this.git([
       "show",
       "--name-status",

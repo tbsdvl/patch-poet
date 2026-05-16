@@ -14,13 +14,17 @@ export class GitPatchParser {
     const result = new Map<string, PatchFileModel["changeType"]>();
 
     for (const line of value.split("\n")) {
-      if (!line.trim()) continue;
+      if (!line.trim()) {
+        continue;
+      }
 
       const parts = line.split("\t");
       const status = parts[0];
       const path = parts.at(-1);
 
-      if (!status || !path) continue;
+      if (!status || !path) {
+        continue;
+      }
 
       result.set(path, this.convertToChangeType(status));
     }
@@ -36,17 +40,24 @@ export class GitPatchParser {
   private static parseNumStat(
     value: string
   ): Map<string, { additions: number; deletions: number; isBinary: boolean }> {
-    const result = new Map<
-      string,
-      { additions: number; deletions: number; isBinary: boolean }
+    const result = new Map<string,
+      {
+        additions: number;
+        deletions: number;
+        isBinary: boolean
+      }
     >();
 
     for (const line of value.split("\n")) {
-      if (!line.trim()) continue;
+      if (!line.trim()) {
+        continue;
+      }
 
       const [additionsRaw, deletionsRaw, path] = line.split("\t");
 
-      if (!path) continue;
+      if (!path) {
+        continue;
+      }
 
       const isBinary = additionsRaw === "-" || deletionsRaw === "-";
 
@@ -74,11 +85,15 @@ export class GitPatchParser {
       const normalized = `diff --git ${section}`;
       const match = normalized.match(/^diff --git a\/(.+?) b\/(.+)$/m);
 
-      if (!match) continue;
+      if (!match) {
+        continue;
+      }
 
       const path = match[2];
 
-      if (!path) continue;
+      if (!path) {
+        continue;
+      }
 
       result.set(path, normalized.trimEnd());
     }

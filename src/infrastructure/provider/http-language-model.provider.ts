@@ -3,6 +3,7 @@ import { LanguageModelChunkResponseModel } from "../../domain/models/provider/la
 import { LanguageModelDocumentRequestModel } from "../../domain/models/provider/language-model-document-request.model";
 import { LanguageModelDocumentResponseModel } from "../../domain/models/provider/language-model-document-response.model";
 import { LanguageModelProviderModel } from "../../domain/models/provider/language-model-provider.model";
+import { LanguageModelResponseParser } from "../parser/language-model-response.parser";
 
 export class HttpLanguageModelProvider implements LanguageModelProviderModel {
 
@@ -82,11 +83,12 @@ export class HttpLanguageModelProvider implements LanguageModelProviderModel {
       throw new Error(`Model provider failed with HTTP ${response.status}`);
     }
 
-    // TODO: Create the ModelResponseParser
+    const text = await response.text();
+
     return {
-      // markdown: ModelResponseParser.toMarkdown(await response.text(), {
-      //   maxOutputChars: this.options.maxOutputChars
-      // })
-    } as LanguageModelDocumentResponseModel;
+      markdown: LanguageModelResponseParser.toMarkdown(text, {
+        maxOutputChars: this.options.maxOutputChars
+      })
+    };
   }
 }

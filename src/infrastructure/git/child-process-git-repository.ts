@@ -9,7 +9,7 @@ const execFileAsync = promisify(execFile);
 
 export class ChildProcessGitRepository implements GitRepositoryModel {
 
-  private readonly format: string = [
+  private readonly patchFormat: string = [
       "%H",
       "%h",
       "%an",
@@ -19,19 +19,49 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
       "%b"
     ].join("%x1f");
 
-  public constructor(private readonly cwd: string) {}
+  public constructor(
+    private readonly cwd: string
+  ) {}
 
+  /**
+    Executes a Git command with the given arguments and returns the stdout and stderr as strings.
+    @param {string[]} args The arguments to pass to the Git command.
+    @returns An object containing the stdout and stderr of the Git command.
+  */
+  // TODO: Make the numbers constants.
+  // Maybe move them to a separate file.
+  private async git(args: readonly string[]): Promise<{ stdout: string; stderr: string }> {
+    return execFileAsync("git", [...args], {
+      cwd: this.cwd,
+      encoding: "utf8",
+      maxBuffer: 1024 * 1024 * 32,
+      timeout: 30_000
+    });
+  }
+
+  /**
+    Gets the current branch name from the HEAD file.
+    @returns The name of the current branch.
+  */
   public async getCurrentBranch(): Promise<string> {
     const { stdout } = await this.git(["rev-parse", "--abbrev-ref", "HEAD"]);
     return stdout.trim();
   }
 
-  public async getCommitMetadata(commitRef: string): Promise<CommitMetadataModel> {
 
+  /**
+    Gets the commit data for the given commit reference.
+    The commit reference can be a commit hash, a branch name, or any other valid Git reference.
+    The method returns an object containing the commit metadata, including the full hash, short hash,
+    branch name, author name, author email, committed date in ISO format, subject, and body of the commit message.
+    @param {string} commitRef The Git reference for the commit (e.g., commit hash, branch name).
+    @returns An object containing the commit metadata.
+  */
+  public async getCommitMetadata(commitRef: string): Promise<CommitMetadataModel> {
     const { stdout } = await this.git([
       "show",
       "--quiet",
-      `--format=${this.format}`,
+      `--format=${this.patchFormat}`,
       commitRef
     ]);
 
@@ -40,6 +70,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
 
     const branchName = await this.getCurrentBranch();
 
+    // TODO: remove the empty strings. This is gross.
     return {
       hash: hash?.trim() ?? "",
       shortHash: shortHash?.trim() ?? "",
@@ -52,6 +83,13 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
     };
   }
 
+  /**
+   * Gets the changed files for the given commit reference.
+   * The method returns an array of objects representing the changed files, including the file path,
+   * change type (added, modified, deleted, renamed, or copied), number of additions and deletions,
+   * @param {string} commitRef The Git reference for the commit (e.g., commit hash, branch name).
+   * @returns An array of objects representing the changed files.
+  */
   public async getChangedFiles(commitRef: string): Promise<readonly PatchFileModel[]> {
     const nameStatus = await this.git([
       "show",
@@ -80,15 +118,6 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
       nameStatus: nameStatus.stdout,
       numStat: diffStats.stdout,
       patch: patch.stdout
-    });
-  }
-
-  private async git(args: readonly string[]): Promise<{ stdout: string; stderr: string }> {
-    return execFileAsync("git", [...args], {
-      cwd: this.cwd,
-      encoding: "utf8",
-      maxBuffer: 1024 * 1024 * 32,
-      timeout: 30_000 // make these constants
     });
   }
 }

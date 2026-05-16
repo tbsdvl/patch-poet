@@ -57,7 +57,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
     The method returns an object containing the commit metadata, including the full hash, short hash,
     branch name, author name, author email, committed date in ISO format, subject, and body of the commit message.
     @param {string} commitRef The Git reference for the commit (e.g., commit hash, branch name).
-    @returns An object containing the commit metadata.
+    @returns {Promise<CommitMetadataModel>} A promise that containing the commit metadata.
   */
   // TODO: This method is doing a lot. It might be better to split it into multiple methods.
   public async getCommitMetadata(commitRef: string): Promise<CommitMetadataModel> {
@@ -68,8 +68,15 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
       commitRef
     ]);
 
-    const [hash, shortHash, authorName, authorEmail, committedAtIso, subject, body] =
-      stdout.split("\x1f");
+    const [
+      hash,
+      shortHash,
+      authorName,
+      authorEmail,
+      committedAtIso,
+      subject,
+      body
+    ] = stdout.split("\x1f");
 
     const branchName = await this.getCurrentBranch();
 

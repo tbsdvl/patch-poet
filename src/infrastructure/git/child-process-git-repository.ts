@@ -30,6 +30,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
   */
   // TODO: Make the numbers constants.
   // Maybe move them to a separate file.
+  // Maybe make them configurable.
   private async git(args: readonly string[]): Promise<{ stdout: string; stderr: string }> {
     return execFileAsync("git", [...args], {
       cwd: this.cwd,
@@ -43,6 +44,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
     Gets the current branch name from the HEAD file.
     @returns The name of the current branch.
   */
+  // TODO: This is a bit of a hack. It would be better to use the Git command to get the current branch name.
   public async getCurrentBranch(): Promise<string> {
     const { stdout } = await this.git(["rev-parse", "--abbrev-ref", "HEAD"]);
     return stdout.trim();
@@ -57,6 +59,7 @@ export class ChildProcessGitRepository implements GitRepositoryModel {
     @param {string} commitRef The Git reference for the commit (e.g., commit hash, branch name).
     @returns An object containing the commit metadata.
   */
+  // TODO: This method is doing a lot. It might be better to split it into multiple methods.
   public async getCommitMetadata(commitRef: string): Promise<CommitMetadataModel> {
     const { stdout } = await this.git([
       "show",
